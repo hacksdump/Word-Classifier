@@ -6,10 +6,10 @@ TRAIN_DIR = './Train-corpus'
 PARSED_DIR = './parsed'
 PARSED_SIMPLE = PARSED_DIR + '/word-tag'
 PARSED_META = PARSED_DIR + '/word-metadata'
+word_map = {}
 for filename in os.listdir(TRAIN_DIR):
     print("Parsing", filename)
     with open(TRAIN_DIR + '/' + filename) as train_data:
-        word_map = {}
         tree = ET.parse(train_data)
         root = tree.getroot()
         generate_file_name = filename.split('.')[0] + '.txt'
@@ -27,6 +27,6 @@ for filename in os.listdir(TRAIN_DIR):
                         'count': 1
                     }
 
-        with open(PARSED_META + '/' + generate_file_name, 'w') as write_parsed:
-            for word in sorted(word_map):
-                print(word, word_map[word], file=write_parsed)
+with open(PARSED_META + '/' + 'final.txt', 'w') as write_parsed:
+    for word in sorted(word_map):
+        print(word, word_map[word], file=write_parsed)
