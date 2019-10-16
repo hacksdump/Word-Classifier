@@ -1,0 +1,5 @@
+Train-corpus/**
+Test-corpus/**
+.vscode
+env
+*.txt
