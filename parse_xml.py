@@ -3,6 +3,7 @@ import os
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 import sys
+import numpy as np
 
 # Store folder names
 TEST_DIR = './Test-corpus'
@@ -10,6 +11,8 @@ TRAIN_DIR = './Train-corpus'
 PARSED_DIR = './parsed'
 PARSED_SIMPLE = PARSED_DIR + '/word-tag'
 PARSED_META = PARSED_DIR + '/word-metadata'
+
+PLOT = False
 
 # Store word data in a map
 # {
@@ -41,13 +44,14 @@ for filename in os.listdir(TRAIN_DIR):
             for word_data in root.iter('w'):
                 metadata = word_data.attrib
                 word = word_data.text.strip().lower()
-                tag = metadata['pos']
-                write_parsed.write("{}_{}\n".format(word, tag))
-                # Store word data in word map
-                if (word, tag) in word_map:
-                    word_map[(word, tag)] += 1
-                else:
-                    word_map[(word, tag)] = 1
+                tags = metadata['c5'].split('-')
+                for tag in tags:
+                    write_parsed.write("{}_{}\n".format(word, tag))
+                    # Store word data in word map
+                    if (word, tag) in word_map:
+                        word_map[(word, tag)] += 1
+                    else:
+                        word_map[(word, tag)] = 1
 
 ################################
 ############ WEEK 2 ############
@@ -89,9 +93,11 @@ for i in range(10):
     top_ten_words.append(word)
     top_ten_word_count.append(uniq_word_count[word])
     print(word, uniq_word_count[word])
-# Plot pie chart
-plt.pie(top_ten_word_count, labels=top_ten_words)
-plt.show()
+
+if PLOT:
+    # Plot pie chart
+    plt.pie(top_ten_word_count, labels=top_ten_words)
+    plt.show()
 
 # Calculating tag frequency
 tag_map = {}
@@ -115,9 +121,10 @@ for i in range(10):
     top_ten_tag_count.append(tag_map[tag])
     print("{} {}".format(tag, tag_map[tag]))
 
-# Plot pie chart
-plt.pie(top_ten_tag_count, labels=top_ten_tags)
-plt.show()
+if PLOT:
+    # Plot pie chart
+    plt.pie(top_ten_tag_count, labels=top_ten_tags)
+    plt.show()
 
 ################################
 ############ WEEK 4 ############
@@ -126,7 +133,6 @@ plt.show()
 # Problem statement: For each word, compute probabilities of word associations with tags. Program should be
 # able to display probability of each word given the tag for the training corpus.
 
-tag_word_map = {}
 with open(PARSED_META + '/' + 'tag_bayes_freq.txt', 'w') as write_parsed:
     for (word, tag) in word_map:
         word_count_for_tag = word_map[(word, tag)]
@@ -160,28 +166,78 @@ for filename in os.listdir(TEST_DIR):
             for word_data in root.iter('w'):
                 metadata = word_data.attrib
                 word = word_data.text.strip().lower()
-                tag = metadata['pos']
-                write_parsed.write("{}_{}\n".format(word, tag))
-                # Store word data in test map
-                if (word, tag) in test_map:
-                    test_map[(word, tag)] += 1
-                else:
-                    test_map[(word, tag)] = 1
+                tags = metadata['c5'].split('-')
+                for tag in tags:
+                    write_parsed.write("{}_{}\n".format(word, tag))
+                    # Store word data in test map
+                    if (word, tag) in test_map:
+                        test_map[(word, tag)] += 1
+                    else:
+                        test_map[(word, tag)] = 1
 
 train_word_vs_tag = {}
-
 for (word, tag) in word_map:
     if not word in train_word_vs_tag:
         train_word_vs_tag[word] = {}
     train_word_vs_tag[word][tag] = word_map[(word, tag)]
 
+best_tag_for_word = {}
+for word in train_word_vs_tag:
+    best_tag_for_word[word] = max(
+        train_word_vs_tag[word].keys(), key=lambda item: train_word_vs_tag[word][item])
+
+
 with open(PARSED_DIR + '/test_predictions.txt', 'w') as prediction_write:
     for (word, tag) in test_map:
-        if word in train_word_vs_tag:
-            predicted_tag = max(
-                train_word_vs_tag[word].keys(), key=lambda item: train_word_vs_tag[word][item])
+        if word in best_tag_for_word:
+            predicted_tag = best_tag_for_word[word]
         else:
             predicted_tag = "NA"
         predictionIsCorrect = predicted_tag == tag
         prediction_write.write(word + "_" + predicted_tag +
                                [" *" + tag, ""][predictionIsCorrect] + "\n")
+
+
+################################
+############ WEEK 6 ############
+################################
+
+# Generate confusion matrix for the word-tag pair.
+tag_count = len(tags_sorted_in_descending_order)
+
+confusion_matrix = np.zeros((tag_count, tag_count))
+
+# Rows are actual tags
+# Columns are predicted tags
+
+
+def get_index_from_tag(tag):
+    tag_list = tags_sorted_in_descending_order
+    return tag_list.index(tag)
+
+
+print(tag_count, tags_sorted_in_descending_order)
+
+
+def print_matrix_sample(matrix):
+    for i in range(5):
+        for j in range(5):
+            print(matrix[i][j], end=" ")
+        print()
+
+
+for (word, tag) in test_map:
+    if word in best_tag_for_word:
+        predicted_tag = best_tag_for_word[word]
+    actual_index = get_index_from_tag(tag)
+    predicted_index = get_index_from_tag(predicted_tag)
+    confusion_matrix[actual_index][predicted_index] += 1
+
+for i in range(tag_count):
+    for j in range(tag_count):
+        print(confusion_matrix[i][j], end=" ")
+    print()
+
+if PLOT or True:
+    plt.matshow(confusion_matrix)
+    plt.show()
