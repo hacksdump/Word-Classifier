@@ -25,7 +25,7 @@ def get_map_from_xml(xml_file):
     for word_data in root.iter('w'):
         metadata = word_data.attrib
         word = word_data.text.strip().lower()
-        tags = metadata['c5'].split('/')
+        tags = metadata['c5'].split('-')
         for tag in tags:
             # Store word and tag in array
             word_tag.append((word, tag))
