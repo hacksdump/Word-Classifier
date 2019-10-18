@@ -3,3 +3,4 @@ Test-corpus/**
 .vscode
 env
 *.txt
+*.pyc
