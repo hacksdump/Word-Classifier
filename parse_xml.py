@@ -216,28 +216,23 @@ def get_index_from_tag(tag):
     return tag_list.index(tag)
 
 
-print(tag_count, tags_sorted_in_descending_order)
-
-
-def print_matrix_sample(matrix):
-    for i in range(5):
-        for j in range(5):
-            print(matrix[i][j], end=" ")
-        print()
-
-
+correct_count = 0
+incorrect_count = 0
 for (word, tag) in test_map:
     if word in best_tag_for_word:
         predicted_tag = best_tag_for_word[word]
     actual_index = get_index_from_tag(tag)
     predicted_index = get_index_from_tag(predicted_tag)
+    if actual_index == predicted_index:
+        correct_count += 1
+    else:
+        incorrect_count += 1
     confusion_matrix[actual_index][predicted_index] += 1
 
-for i in range(tag_count):
-    for j in range(tag_count):
-        print(confusion_matrix[i][j], end=" ")
-    print()
 
-if PLOT or True:
+accuracy = correct_count / (correct_count + incorrect_count)
+print("Accuracy: ", accuracy)
+
+if PLOT:
     plt.matshow(confusion_matrix)
     plt.show()
