@@ -1,4 +1,5 @@
 #!./env/bin/python
+import sys
 
 ################################
 ########### WEEK 1 #############
@@ -7,7 +8,8 @@
 # Problem statement: Bring the corpus into required format. (preprocessing)
 # word1_tag
 # word2_tag
-import tag_words
+if not "--no-train" in sys.argv:
+    import tag_words
 
 
 ################################
