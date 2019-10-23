@@ -15,12 +15,12 @@ with open(TEST_WORD_TAG_FILE, 'w+') as write_word_tag:
             prediction_csv_file, fieldnames=prediction_field_names)
         prediction_csv_writer.writeheader()
         # Iterate through all files in Train-corpus directory
+        print("Parsing test xml files")
         for filename in os.listdir(TEST_DIR):
             path = os.path.join(TEST_DIR, filename)
             # Ignore directories... no recursive walking
             if not os.path.isfile(path):
                 continue
-            print("Parsing {}".format(filename))
             with open(path) as xml_file:
                 word_tag = get_map_from_xml(xml_file)
                 for word, tag in word_tag:
@@ -39,3 +39,4 @@ with open(TEST_WORD_TAG_FILE, 'w+') as write_word_tag:
                             "predicted": prediction[word]['predicted']
                         }
                     )
+        print("Parsed")

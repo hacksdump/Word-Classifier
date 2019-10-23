@@ -3,7 +3,9 @@ import numpy as np
 from utils.map_word_tag import get_word_tag_map
 from config.paths import TEST_WORD_TAG_FILE, PREDICTION_FILE
 import csv
-import seaborn
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set()
 
 stats = SimpleCount()
 tag_list = stats.tags_descending
@@ -24,10 +26,13 @@ with open(PREDICTION_FILE) as prediction_file:
         predicted_index = tag_list.index(row['predicted'])
         confusion_matrix[actual_index][predicted_index] += 1
 
-for i in range(tag_count):
-    for j in range(tag_count):
-        print(confusion_matrix[i][j], end=" ")
-    print()
+
+ax = sns.heatmap(confusion_matrix, xticklabels=tag_list, yticklabels=tag_list)
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plot_manager = plt.get_current_fig_manager()
+plot_manager.full_screen_toggle()
+plt.show()
 
 accuracy = correct_count / (correct_count + incorrect_count)
 print("Accuracy: ", accuracy)
