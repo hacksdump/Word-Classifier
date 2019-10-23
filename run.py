@@ -36,3 +36,17 @@ import word_tag_statistics
 # Problem statement: For each word, compute probabilities of word associations with tags. Program should be
 # able to display probability of each word given the tag for the training corpus.
 import training
+
+################################
+############ WEEK 5 ############
+################################
+
+# Problem statement: Predict the new tags for the words in the test corpus.
+import prediction
+
+################################
+############ WEEK 6 ############
+################################
+
+# Generate confusion matrix for the word-tag pair.
+import confusion
