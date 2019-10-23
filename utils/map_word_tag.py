@@ -9,5 +9,5 @@ def get_word_tag_map(preprocessed_file):
                 word_tag__frequency[key] += 1
             else:
                 word_tag__frequency[key] = 1
-            line = preprocessed_file.readline()
+
     return word_tag__frequency
