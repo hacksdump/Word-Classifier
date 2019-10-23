@@ -17,3 +17,22 @@ import tag_words
 # Problem statement: Create a dictionary having entry for unique word+tag combination with it's frequency
 # count in the corpus.
 import word_tag_frequency
+
+################################
+############ WEEK 3 ############
+################################
+
+# Problem statement: Report top 10 frequently used words and 10 frequently used tags. Provide your analysis of
+# the word and tag distribution in the corpus.
+
+# Word frequency Preprocessing
+# Unique word map
+import word_tag_statistics
+
+################################
+############ WEEK 4 ############
+################################
+
+# Problem statement: For each word, compute probabilities of word associations with tags. Program should be
+# able to display probability of each word given the tag for the training corpus.
+import training
