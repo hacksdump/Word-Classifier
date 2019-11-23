@@ -7,7 +7,7 @@ from collections import defaultdict
 START_TAG = "^"
 END_TAG = "."
 
-transition = defaultdict(lambda: defaultdict(int))
+transition = defaultdict(lambda: defaultdict(float))
 
 
 def push_to_transition(tag_list):
@@ -45,4 +45,7 @@ with open("./Train-corpus/A00.xml") as xml_file:
             tag_list.insert(1, tag)
         push_to_transition(tag_list)
 
-print(transition)
+for origin in transition:
+    for terminus in transition[origin]:
+        if terminus != "total":
+            transition[origin][terminus] /= transition[origin]["total"]
