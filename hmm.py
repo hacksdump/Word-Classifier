@@ -14,24 +14,13 @@ emission = defaultdict(lambda: defaultdict(float))
 
 
 def push_to_transition(tag_list):
-    size_list = len(tag_list)
-    if size_list == 2 and tag_list[0] == START_TAG and tag_list[-1] == END_TAG:
-        return
-    if size_list == 1 and tag_list[0] == END_TAG:
-        return
-    # It is assumed that the current tag, i.e. the first element in the list
-    # is always a single tag like ^ or NN1 not a compound tag like NN1-VBZ.
-    # This situation is ensured at the time this function is called.
-    current_tag = tag_list[0]
-    # Next can be a single tag or a conjunction of ambiguous tags like NN1-VBZ.
-    # Thus whenever we see such tags, we need to branch there to accomodate multiple
-    # such cases. A recursive tree if formed for many such cases in a single sentence.
-    next_tags = tag_list[1]
-    next_tags = next_tags.split("-")
-    for next_tag in next_tags:
-        transition[current_tag][next_tag] += 1
-        transition[current_tag]["TOTAL"] += 1
-        push_to_transition([next_tag] + tag_list[2:])
+    for i in range(1, len(tag_list)):
+        previous_tags = tag_list[i - 1].split("-")
+        current_tags = tag_list[i].split("-")
+        for previous_tag in previous_tags:
+            for current_tag in current_tags:
+                transition[previous_tag][current_tag] += 1
+                transition[previous_tag]["TOTAL"] += 1
 
 
 for file in os.listdir(TRAIN_DIR):
