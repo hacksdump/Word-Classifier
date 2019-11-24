@@ -17,7 +17,7 @@ def get_default_dict_float():
 
 
 hmm_file_path = os.path.join(PARSED_DIR, HMM_FILE)
-if os.path.exists(hmm_file_path) and not (len(sys.argv) > 1 and "train" in sys.argv[1]):
+if os.path.exists(hmm_file_path) and not (len(sys.argv) > 1 and sys.argv[1] == "--train"):
     with open(hmm_file_path, "rb") as hmm_file_read:
         training_data = pickle.load(hmm_file_read)
     transition = training_data["transition"]
