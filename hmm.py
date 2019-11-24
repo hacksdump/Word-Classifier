@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 from collections import defaultdict
 import os
-from config.paths import TRAIN_DIR
+from config.paths import TRAIN_DIR, TEST_DIR
 
 START_TAG = "^"
 END_TAG = "."
@@ -25,13 +25,11 @@ def push_to_transition(tag_list):
 
 for file in os.listdir(TRAIN_DIR):
     if ".xml" in file:
-        print("Parsing", file)
         with open(os.path.join(TRAIN_DIR, file)) as xml_file:
             tree = ET.parse(xml_file)
             root = tree.getroot()
 
             for sentence in root.iter('s'):
-                num = sentence.attrib["n"]
                 # This tag list may contain start tag, end_tag, simple tags and compound tags.
                 # Actual filling of transition values will be handled by another subroutine.
                 tag_list = [START_TAG]
@@ -65,9 +63,7 @@ def purify_sentence(sentence):
     return purified_sentence
 
 
-def viterbi(sentence):
-    sentence = purify_sentence(sentence)
-    words = sentence.split(" ")
+def viterbi(words):
     empirical_tag_list = [tag for tag in transition.keys() if tag != START_TAG]
     dp_dict = defaultdict(lambda: defaultdict(float))
     for i in range(len(words)):
@@ -90,12 +86,42 @@ def viterbi(sentence):
                     ]
                 )
 
-    predicted_tags = []
+    predicted_tag_sequence = []
     for word in words:
-        predicted_tags.append(
+        predicted_tag_sequence.append(
             max(dp_dict, key=lambda tag: dp_dict[tag][word])
         )
-    print(predicted_tags)
+    return predicted_tag_sequence
 
 
-viterbi("this virus affects the body")
+def are_tag_sequences_similar(sequence_one, sequence_two):
+    if len(sequence_one) != len(sequence_two):
+        return False
+    for i in range(len(sequence_one)):
+        if not sequence_one[i] in sequence_two[i] or not sequence_two[i] in sequence_one[i]:
+            return False
+    return True
+
+
+total_test_sentences = 0
+correctly_predicted_test_sentences = 0
+for file in os.listdir(TEST_DIR):
+    if ".xml" in file:
+        with open(os.path.join(TEST_DIR, file)) as xml_file:
+            tree = ET.parse(xml_file)
+            root = tree.getroot()
+            for sentence in root.iter('s'):
+                total_test_sentences += 1
+                words = []
+                actual_tag_sequence = []
+                for word_data in sentence.iter("w"):
+                    word = word_data.text.strip().lower()
+                    words.append(word)
+                    tag = word_data.attrib["c5"]
+                    actual_tag_sequence.append(tag)
+                predicted_tag_sequence = viterbi(words)
+                if are_tag_sequences_similar(actual_tag_sequence, predicted_tag_sequence):
+                    correctly_predicted_test_sentences += 1
+
+prediction_accuracy = correctly_predicted_test_sentences / total_test_sentences
+print("Prediction accuracy:", prediction_accuracy)
