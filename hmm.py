@@ -4,58 +4,77 @@ import xml.etree.ElementTree as ET
 
 from collections import defaultdict
 import os
-from config.paths import TRAIN_DIR, TEST_DIR
+import sys
+from config.paths import TRAIN_DIR, TEST_DIR, PARSED_DIR, HMM_FILE
+import pickle
 
 START_TAG = "^"
 END_TAG = "."
 
-transition = defaultdict(lambda: defaultdict(float))
-emission = defaultdict(lambda: defaultdict(float))
+hmm_file_path = os.path.join(PARSED_DIR, HMM_FILE)
+if os.path.exists(hmm_file_path):
+    with open(hmm_file_path, "rb") as hmm_file_read:
+        training_data = pickle.load(hmm_file_read)
+    transition = training_data["transition"]
+    emission = training_data["emission"]
+
+else:
+    def get_default_dict_float():
+        return defaultdict(float)
+    transition = defaultdict(get_default_dict_float)
+    emission = defaultdict(get_default_dict_float)
+
+    def push_to_transition(tag_list):
+        for i in range(1, len(tag_list)):
+            previous_tags = tag_list[i - 1].split("-")
+            current_tags = tag_list[i].split("-")
+            for previous_tag in previous_tags:
+                for current_tag in current_tags:
+                    transition[previous_tag][current_tag] += 1
+                    transition[previous_tag]["TOTAL"] += 1
+
+    for file in os.listdir(TRAIN_DIR):
+        if ".xml" in file:
+            with open(os.path.join(TRAIN_DIR, file)) as xml_file:
+                tree = ET.parse(xml_file)
+                root = tree.getroot()
+
+                for sentence in root.iter('s'):
+                    # This tag list may contain start tag, end_tag, simple tags and compound tags.
+                    # Actual filling of transition values will be handled by another subroutine.
+                    tag_list = [START_TAG]
+                    for word_data in sentence.iter("w"):
+                        word = word_data.text.strip().lower()
+                        metadata = word_data.attrib
+                        simple_or_compound_tag = metadata["c5"]
+                        tag_list.append(simple_or_compound_tag)
+                        for tag in simple_or_compound_tag.split("-"):
+                            emission[tag][word] += 1
+                            emission[tag]["TOTAL"] += 1
+
+                    tag_list.append(END_TAG)
+                    push_to_transition(tag_list)
+
+    for origin in transition:
+        for terminus in transition[origin]:
+            if terminus != "TOTAL":
+                transition[origin][terminus] /= transition[origin]["TOTAL"]
+
+    for tag in emission:
+        for word in emission[tag]:
+            if word != "TOTAL":
+                emission[tag][word] /= emission[tag]["TOTAL"]
+
+    with open(hmm_file_path, "wb") as hmm_file_write:
+        pickle.dump({
+            "transition": transition,
+            "emission": emission
+        }, hmm_file_write)
 
 
-def push_to_transition(tag_list):
-    for i in range(1, len(tag_list)):
-        previous_tags = tag_list[i - 1].split("-")
-        current_tags = tag_list[i].split("-")
-        for previous_tag in previous_tags:
-            for current_tag in current_tags:
-                transition[previous_tag][current_tag] += 1
-                transition[previous_tag]["TOTAL"] += 1
-
-
-for file in os.listdir(TRAIN_DIR):
-    if ".xml" in file:
-        with open(os.path.join(TRAIN_DIR, file)) as xml_file:
-            tree = ET.parse(xml_file)
-            root = tree.getroot()
-
-            for sentence in root.iter('s'):
-                # This tag list may contain start tag, end_tag, simple tags and compound tags.
-                # Actual filling of transition values will be handled by another subroutine.
-                tag_list = [START_TAG]
-                for word_data in sentence.iter("w"):
-                    word = word_data.text.strip().lower()
-                    metadata = word_data.attrib
-                    simple_or_compound_tag = metadata["c5"]
-                    tag_list.append(simple_or_compound_tag)
-                    for tag in simple_or_compound_tag.split("-"):
-                        emission[tag][word] += 1
-                        emission[tag]["TOTAL"] += 1
-
-                tag_list.append(END_TAG)
-                push_to_transition(tag_list)
-
-for origin in transition:
-    for terminus in transition[origin]:
-        if terminus != "TOTAL":
-            transition[origin][terminus] /= transition[origin]["TOTAL"]
-
-for tag in emission:
-    for word in emission[tag]:
-        if word != "TOTAL":
-            emission[tag][word] /= emission[tag]["TOTAL"]
-
-
+#########################################
+############### TESTING #################
+#########################################
 def purify_sentence(sentence):
     allowed_chars = [chr(x) for x in range(97, 97 + 26)] + ["'", " "]
     purified_sentence = "".join([
