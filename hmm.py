@@ -11,16 +11,20 @@ import pickle
 START_TAG = "^"
 END_TAG = "."
 
+
+def get_default_dict_float():
+    return defaultdict(float)
+
+
 hmm_file_path = os.path.join(PARSED_DIR, HMM_FILE)
-if os.path.exists(hmm_file_path):
+if os.path.exists(hmm_file_path) and not (len(sys.argv) > 1 and "train" in sys.argv[1]):
     with open(hmm_file_path, "rb") as hmm_file_read:
         training_data = pickle.load(hmm_file_read)
     transition = training_data["transition"]
     emission = training_data["emission"]
+    print("Train data exists on disk. Moving on to testing...")
 
 else:
-    def get_default_dict_float():
-        return defaultdict(float)
     transition = defaultdict(get_default_dict_float)
     emission = defaultdict(get_default_dict_float)
 
@@ -70,11 +74,15 @@ else:
             "transition": transition,
             "emission": emission
         }, hmm_file_write)
+    print("Training Complete.")
 
 
 #########################################
 ############### TESTING #################
 #########################################
+print("Testing begins")
+
+
 def purify_sentence(sentence):
     allowed_chars = [chr(x) for x in range(97, 97 + 26)] + ["'", " "]
     purified_sentence = "".join([
