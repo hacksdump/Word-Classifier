@@ -150,6 +150,8 @@ for file in os.listdir(TEST_DIR):
                 predicted_tag_sequence = viterbi(words)
                 correctly_predicted_test_words += matching_tag_count(
                     actual_tag_sequence, predicted_tag_sequence)
+    if "--quick-test" in sys.argv:
+        break
 
 prediction_accuracy = correctly_predicted_test_words / total_test_words
 print("Prediction accuracy:", prediction_accuracy * 100, "%")
