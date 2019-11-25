@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import tkinter
 import xml.etree.ElementTree as ET
 
 from collections import defaultdict
@@ -116,6 +117,12 @@ def bigram_viterbi(words):
     return predicted_tag_sequence
 
 
+def sentence_to_tags(sentence):
+    sentence = purify_sentence(sentence)
+    tag_sequence = bigram_viterbi(sentence.split(" "))
+    return " ".join(tag_sequence)
+
+
 def matching_tag_count(sequence_one, sequence_two):
     if len(sequence_one) != len(sequence_two):
         return 0
@@ -160,10 +167,46 @@ for file in os.listdir(TEST_DIR):
 prediction_accuracy = correctly_predicted_test_words / total_test_words
 print("Prediction accuracy:", prediction_accuracy * 100, "%")
 
-ax = sns.heatmap(confusion_matrix, xticklabels=empirical_tag_list,
-                 yticklabels=empirical_tag_list)
-plt.xlabel("Predicted")
-plt.ylabel("Actual")
-plot_manager = plt.get_current_fig_manager()
-plot_manager.full_screen_toggle()
-plt.show()
+if "--show-matrix" in sys.argv:
+    ax = sns.heatmap(confusion_matrix, xticklabels=empirical_tag_list,
+                     yticklabels=empirical_tag_list)
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plot_manager = plt.get_current_fig_manager()
+    plot_manager.full_screen_toggle()
+    plt.show()
+
+####################
+####### GUI ########
+####################
+if "--gui" in sys.argv:
+    INITIAL_SENTENCE = "Study for the greater good."
+
+    # Root window
+    root = tkinter.Tk()
+    root.geometry("1000x500")
+    root.title("HMM predictor")
+
+    # Prompt text
+    hwtext = tkinter.Label(root, text='Enter test sentence')
+    hwtext.grid(column=0, row=0)
+
+    r = tkinter.StringVar()
+    r.set(INITIAL_SENTENCE)
+    r_entry = tkinter.Entry(root, width=80, textvariable=r)
+    r_entry.grid(column=0, row=1)
+
+    s = tkinter.StringVar()
+    s.set(sentence_to_tags(INITIAL_SENTENCE))
+
+    def comp_s(event):
+        global s
+        s.set(sentence_to_tags(r.get()))  # construct string
+
+    r_entry.bind('<Key>', comp_s)
+
+    s_label = tkinter.Label(root, textvariable=s, width=80)
+    s_label.config(font=("Courier", 15))
+    s_label.grid(column=0, row=2)
+
+    root.mainloop()
