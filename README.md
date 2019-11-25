@@ -16,3 +16,7 @@ pip install -r requirements.txt
 
 ### Confusion matrix visualized with seaborn heatmap
 ![Confusion matrix](./images/screens/confusion_matrix.png)
+
+
+### Confusion matrix for HMM
+![Confusion matrix HMM](./images/screens/confusion_hmm.png)
