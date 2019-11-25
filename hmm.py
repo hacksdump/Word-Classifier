@@ -7,6 +7,10 @@ import os
 import sys
 from config.paths import TRAIN_DIR, TEST_DIR, PARSED_DIR, HMM_FILE
 import pickle
+import numpy
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set()
 
 START_TAG = "^"
 END_TAG = "."
@@ -81,6 +85,17 @@ else:
 ############### TESTING #################
 #########################################
 print("Testing begins")
+tag_count = len(transition)
+empirical_tag_list = [tag for tag in transition.keys() if tag != START_TAG]
+empirical_tag_list = sorted(
+    empirical_tag_list, key=lambda x: emission[x]["TOTAL"], reverse=True)
+
+
+def get_tag_index(tag):
+    return empirical_tag_list.index(tag)
+
+
+confusion_matrix = numpy.zeros((tag_count, tag_count))
 
 
 def purify_sentence(sentence):
@@ -91,7 +106,6 @@ def purify_sentence(sentence):
 
 
 def bigram_viterbi(words):
-    empirical_tag_list = [tag for tag in transition.keys() if tag != START_TAG]
     predicted_tag_sequence = [START_TAG]
 
     for word in words:
@@ -131,8 +145,25 @@ for file in os.listdir(TEST_DIR):
                 predicted_tag_sequence = bigram_viterbi(words)
                 correctly_predicted_test_words += matching_tag_count(
                     actual_tag_sequence, predicted_tag_sequence)
+
+                # Filling the confusion matrix
+                for i in range(len(actual_tag_sequence)):
+                    compound_actual_tags = actual_tag_sequence[i]
+                    for actual_tag in compound_actual_tags.split("-"):
+                        actual_tag_index = get_tag_index(actual_tag)
+                        predicted_tag_index = get_tag_index(
+                            predicted_tag_sequence[i])
+                        confusion_matrix[actual_tag_index][predicted_tag_index] += 1
     if "--quick-test" in sys.argv:
         break
 
 prediction_accuracy = correctly_predicted_test_words / total_test_words
 print("Prediction accuracy:", prediction_accuracy * 100, "%")
+
+ax = sns.heatmap(confusion_matrix, xticklabels=empirical_tag_list,
+                 yticklabels=empirical_tag_list)
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plot_manager = plt.get_current_fig_manager()
+plot_manager.full_screen_toggle()
+plt.show()
