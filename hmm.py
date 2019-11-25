@@ -90,34 +90,15 @@ def purify_sentence(sentence):
     return purified_sentence
 
 
-def viterbi(words):
+def bigram_viterbi(words):
     empirical_tag_list = [tag for tag in transition.keys() if tag != START_TAG]
-    dp_dict = defaultdict(lambda: defaultdict(float))
-    for i in range(len(words)):
-        for tag in empirical_tag_list:
-            if i == 0:
-                dp_dict[tag][words[0]] = (
-                    transition[START_TAG][tag] * emission[tag][words[0]])
-            else:
-                dp_dict[tag][words[i]] = max(
-                    [
-                        (
-                            # Value from previous column
-                            dp_dict[prev_tag][words[i-1]] *
-                            # Transition value
-                            transition[prev_tag][tag] *
-                            # Emission value
-                            emission[tag][words[i]]
-                        )
-                        for prev_tag in empirical_tag_list
-                    ]
-                )
+    predicted_tag_sequence = [START_TAG]
 
-    predicted_tag_sequence = []
     for word in words:
-        predicted_tag_sequence.append(
-            max(dp_dict, key=lambda tag: dp_dict[tag][word])
-        )
+        pred = max(empirical_tag_list,
+                   key=lambda tag: transition[predicted_tag_sequence[-1]][tag] * emission[tag][word])
+        predicted_tag_sequence.append(pred)
+    predicted_tag_sequence.pop(0)
     return predicted_tag_sequence
 
 
@@ -147,7 +128,7 @@ for file in os.listdir(TEST_DIR):
                     words.append(word)
                     tag = word_data.attrib["c5"]
                     actual_tag_sequence.append(tag)
-                predicted_tag_sequence = viterbi(words)
+                predicted_tag_sequence = bigram_viterbi(words)
                 correctly_predicted_test_words += matching_tag_count(
                     actual_tag_sequence, predicted_tag_sequence)
     if "--quick-test" in sys.argv:
