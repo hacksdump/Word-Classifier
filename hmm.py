@@ -121,34 +121,37 @@ def viterbi(words):
     return predicted_tag_sequence
 
 
-def are_tag_sequences_similar(sequence_one, sequence_two):
+def matching_tag_count(sequence_one, sequence_two):
     if len(sequence_one) != len(sequence_two):
-        return False
+        return 0
+    count = 0
     for i in range(len(sequence_one)):
-        if not sequence_one[i] in sequence_two[i] or not sequence_two[i] in sequence_one[i]:
-            return False
-    return True
+        if not sequence_one[i] in sequence_two[i] or sequence_two[i] in sequence_one[i]:
+            count += 1
+    return count
 
 
-total_test_sentences = 0
-correctly_predicted_test_sentences = 0
+total_test_words = 0
+correctly_predicted_test_words = 0
 for file in os.listdir(TEST_DIR):
     if ".xml" in file:
         with open(os.path.join(TEST_DIR, file)) as xml_file:
             tree = ET.parse(xml_file)
             root = tree.getroot()
             for sentence in root.iter('s'):
-                total_test_sentences += 1
                 words = []
                 actual_tag_sequence = []
                 for word_data in sentence.iter("w"):
+                    total_test_words += 1
                     word = word_data.text.strip().lower()
                     words.append(word)
                     tag = word_data.attrib["c5"]
                     actual_tag_sequence.append(tag)
                 predicted_tag_sequence = viterbi(words)
-                if are_tag_sequences_similar(actual_tag_sequence, predicted_tag_sequence):
-                    correctly_predicted_test_sentences += 1
+                correctly_predicted_test_words += matching_tag_count(
+                    actual_tag_sequence, predicted_tag_sequence)
+    break
 
-prediction_accuracy = correctly_predicted_test_sentences / total_test_sentences
-print("Prediction accuracy:", prediction_accuracy)
+
+prediction_accuracy = correctly_predicted_test_words / total_test_words
+print("Prediction accuracy:", prediction_accuracy * 100, "%")
